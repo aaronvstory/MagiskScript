@@ -1,36 +1,20 @@
-# Triggers
+#!/system/bin/sh
 
-on post-fs
-    start logd
-    start magisk_pfs
-    wait /dev/.magisk.unblock 20
+# Magisk services initialization
+service magiskd /sbin/magiskd
+    class main
+    user root
+    group root
+    seclabel u:r:magisk:s0
 
+# Post-fs-data script
 on post-fs-data
-    rm /dev/.magisk.unblock
-    load_persist_props
-    start magisk_pfsd
-    wait /dev/.magisk.unblock 60
+    exec /sbin/magisk --post-fs-data
 
-on property:magisk.restart_pfsd=1
-    trigger post-fs-data
+# Service manager (optional)
+on service_manager_ready
+    exec /sbin/magisk --service
 
-# Services
-
-# launch post-fs script
-service magisk_pfs /sbin/magisk --post-fs
-    user root
-    seclabel u:r:su:s0
-    oneshot
-
-# launch post-fs-data script
-service magisk_pfsd /sbin/magisk --post-fs-data
-    user root
-    seclabel u:r:su:s0
-    oneshot
-
-# launch late_start script
-service magisk_service /sbin/magisk  --service
-    class late_start
-    user root
-    seclabel u:r:su:s0
-    oneshot
+# Late start (optional)
+on late-fs
+    exec /sbin/magisk --late-start
